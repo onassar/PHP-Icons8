@@ -24,7 +24,6 @@
          */
         protected $_key;
 
-
         /**
          * _useAlternativeApiEndpoint
          * 
