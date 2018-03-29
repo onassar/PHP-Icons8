@@ -67,6 +67,23 @@
                 'amount' => $options['limit'],
                 'offset' => $options['offset'],
                 'language' => 'en',
+                // 'platforms' => implode(',', array(
+                //     'ios',
+                //     'color',
+                //     'win10',
+                //     'win8',
+                //     'android',
+                //     'androidl',
+                //     'office',
+                //     'ultraviolet',
+                //     'nolan',
+                //     '1em',
+                //     'dusk',
+                //     'wired',
+                //     'cotton',
+                //     'ios11',
+                //     'dotty'
+                // )),
                 'exact_match' => 'true',
                 'exact_amount' => 'true',
                 'auth-id' => $this->_key
