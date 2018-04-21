@@ -117,4 +117,20 @@
             // Done
             return $vectors;
         }
+
+        /**
+         * getPlatforms
+         * 
+         * @access  public
+         * @return  array
+         */
+        public function getPlatforms()
+        {
+            $base = 'https://api.icons8.com';
+            $path = '/api/iconsets/v3/platforms';
+            $url = ($base) . ($path);
+            $response = file_get_contents($url);
+            $decoded = json_decode($response, true);
+            return $decoded;
+        }
     }
