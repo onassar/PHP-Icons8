@@ -101,6 +101,7 @@
                     'id' => $value['id'],
                     'tags' => array(),
                     'original_term' => $term,
+                    'platform_code' => $value['platform_code'],
                     'urls' => array(
                         'svg' => $value['vector']['svg-editable'] . '?auth-id=' . ($this->_key),
                         'png' => array(
