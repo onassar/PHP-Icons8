@@ -97,6 +97,9 @@
             // Cleanup
             $vectors = array();
             foreach ($decoded['result']['search'] as $key => $value) {
+                if (isset($value['vector']) === false) {
+                    continue;
+                }
                 array_push($vectors, array(
                     'id' => $value['id'],
                     'tags' => array(),
