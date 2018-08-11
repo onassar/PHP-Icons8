@@ -19,10 +19,18 @@
         /**
          * _key
          * 
-         * @var     string
+         * @var     null|string
          * @access  protected
          */
-        protected $_key;
+        protected $_key = null;
+
+        /**
+         * _timeout
+         * 
+         * @var     int (default: 10)
+         * @access  protected
+         */
+        protected $_timeout = 10;
 
         /**
          * _useAlternativeApiEndpoint
@@ -39,12 +47,221 @@
          * @param   string $key
          * @return  void
          */
-        public function __construct($key)
+        public function __construct(string $key)
         {
             $this->_key = $key;
-            if ($this->_useAlternativeApiEndpoint === true) {
-                $this->_base = 'https://search.icons8.com';
+        }
+
+        /**
+         * _getNormalizedVectorData
+         * 
+         * @access  protected
+         * @param   string $term
+         * @param   array $decodedResponse
+         * @return  array
+         */
+        protected function _getNormalizedVectorData(string $term, array $decodedResponse): array
+        {
+            $vectors = array();
+            if (isset($decodedResponse['result']['search']) === false) {
+                return $vectors;
             }
+            $records = $decodedResponse['result']['search'];
+            foreach ($records as $record) {
+                if (isset($record['vector']) === false) {
+                    continue;
+                }
+                $urls = $this->_getVectorRecordUrls($record);
+                if (empty($urls) === true) {
+                    continue;
+                }
+                if (isset($record['id']) === false) {
+                    continue;
+                }
+                if (isset($record['platform_code']) === false) {
+                    continue;
+                }
+                $vector = array(
+                    'id' => $record['id'],
+                    'tags' => array(),
+                    'original_term' => $term,
+                    'platform_code' => $record['platform_code'],
+                    'urls' => $urls
+                );
+                array_push($vectors, $vector);
+            }
+            return $vectors;
+        }
+
+        /**
+         * _getPlatformsLookupBase
+         * 
+         * @access  protected
+         * @return  string
+         */
+        protected function _getPlatformsLookupBase(): string
+        {
+            $base = 'https://api.icons8.com';
+            return $base;
+        }
+
+        /**
+         * _getPlatformsLookupPath
+         * 
+         * @access  protected
+         * @return  string
+         */
+        protected function _getPlatformsLookupPath(): string
+        {
+            $path = '/api/iconsets/v3/platforms';
+            return $path;
+        }
+
+        /**
+         * _getPlatformsLookupUrl
+         * 
+         * @access  protected
+         * @return  string
+         */
+        protected function _getPlatformsLookupUrl(): string
+        {
+            $base = $this->_getPlatformsLookupBase();
+            $path = $this->_getPlatformsLookupPath();
+            $url = ($base) . ($path);
+            return $url;
+        }
+
+        /**
+         * _getRequestStreamContext
+         * 
+         * @access  protected
+         * @return  resource
+         */
+        protected function _getRequestStreamContext()
+        {
+            $timeout = $this->_timeout;
+            $options = array(
+                'http' => array(
+                    'method'  => 'GET',
+                    'timeout' => $timeout
+                )
+            );
+            $streamContext = stream_context_create($options);
+            return $streamContext;
+        }
+
+        /**
+         * _getTermSearchBase
+         * 
+         * @access  protected
+         * @return  string
+         */
+        protected function _getTermSearchBase(): string
+        {
+            $base = $this->_base;
+            if ($this->_useAlternativeApiEndpoint === true) {
+                $base = 'https://search.icons8.com';
+            }
+            return $base;
+        }
+
+        /**
+         * _getTermSearchPath
+         * 
+         * @access  protected
+         * @return  string
+         */
+        protected function _getTermSearchPath(): string
+        {
+            $path = '/api/iconsets/v3/search';
+            if ($this->_useAlternativeApiEndpoint === true) {
+                $path = '/api/iconsets/v3u/search';
+            }
+            return $path;
+        }
+
+        /**
+         * _getTermSearchQueryData
+         * 
+         * @access  protected
+         * @param   string $term
+         * @param   array $options
+         * @return  array
+         */
+        protected function _getTermSearchQueryData(string $term, array $options): array
+        {
+            $data = array(
+                'term' => $term,
+                'amount' => (int) $options['limit'],
+                'offset' => (int) $options['offset'],
+                'language' => 'en',
+                'exact_match' => 'true',
+                'exact_amount' => 'true',
+                'auth-id' => $this->_key
+            );
+            return $data;
+        }
+
+        /**
+         * _getTermSearchUrl
+         * 
+         * @access  protected
+         * @param   string $term
+         * @param   array $options
+         * @return  string
+         */
+        protected function _getTermSearchUrl(string $term, array $options): string
+        {
+            $base = $this->_getTermSearchBase();
+            $path = $this->_getTermSearchPath();
+            $data = $this->_getTermSearchQueryData($term, $options);
+            $query = http_build_query($data);
+            $url = ($base) . ($path) . '?' . ($query);
+            return $url;
+        }
+
+        /**
+         * _getVectorRecordUrls
+         * 
+         * @access  protected
+         * @param   array $record
+         * @return  array
+         */
+        protected function _getVectorRecordUrls(array $record): array
+        {
+            if (isset($record['vector']['svg-editable']) === false) {
+                return array();
+            }
+            if (isset($record['png'][0]['link']) === false) {
+                return array();
+            }
+            $key = $this->_key;
+            $svg = ($record['vector']['svg-editable']) . '?auth-id=' . ($key);
+            $png = $record['png'][0]['link'];
+            $png = preg_replace('/\/[0-9]+$/', '/128', $png);
+            $png = str_replace('advertising', 'icon441', $png);
+            $png = str_replace('&', 'and', $png);
+            $urls = array(
+                'svg' => $svg,
+                'png' => array(
+                    '128' => $png
+                )
+            );
+            return $urls;
+        }
+
+        /**
+         * _requestUrl
+         * 
+         * @access  protected
+         * @param   string $url
+         * @return  string
+         */
+        protected function _requestUrl(string $url): string
+        {
+            $streamContext = $this->_getRequestStreamContext();
+            $response = file_get_contents($url, false, $streamContext);
+            return $response;
         }
 
         /**
@@ -52,73 +269,18 @@
          * 
          * @access  public
          * @param   string $term
-         * @param   array $options (default: array())
-         * @return  false|array|stdClass
+         * @param   array $options
+         * @return  array
          */
-        public function getIconsByTerm($term, array $options = array())
+        public function getIconsByTerm(string $term, array $options): array
         {
-            // URL
-            $path = '/api/iconsets/v3/search';
-            if ($this->_useAlternativeApiEndpoint === true) {
-                $path = '/api/iconsets/v3u/search';
+            $url = $this->_getTermSearchUrl($term, $options);
+            $response = $this->_requestUrl($url);
+            $decodedResponse = json_decode($response, true);
+            if ($decodedResponse === null) {
+                return array();
             }
-            $params = array(
-                'term' => $term,
-                'amount' => $options['limit'],
-                'offset' => $options['offset'],
-                'language' => 'en',
-                // 'platforms' => implode(',', array(
-                //     'ios',
-                //     'color',
-                //     'win10',
-                //     'win8',
-                //     'android',
-                //     'androidl',
-                //     'office',
-                //     'ultraviolet',
-                //     'nolan',
-                //     '1em',
-                //     'dusk',
-                //     'wired',
-                //     'cotton',
-                //     'ios11',
-                //     'dotty'
-                // )),
-                'exact_match' => 'true',
-                'exact_amount' => 'true',
-                'auth-id' => $this->_key
-            );
-            $url = ($this->_base) . ($path) . '?' . http_build_query($params);
-
-            // Response
-            $response = file_get_contents($url);
-            $decoded = json_decode($response, true);
-
-            // Cleanup
-            $vectors = array();
-            foreach ($decoded['result']['search'] as $key => $value) {
-                if (isset($value['vector']) === false) {
-                    continue;
-                }
-                array_push($vectors, array(
-                    'id' => $value['id'],
-                    'tags' => array(),
-                    'original_term' => $term,
-                    'platform_code' => $value['platform_code'],
-                    'urls' => array(
-                        'svg' => $value['vector']['svg-editable'] . '?auth-id=' . ($this->_key),
-                        'png' => array(
-                            '128' => str_replace(
-                                '&',
-                                'and',
-                                preg_replace('/\/[0-9]+$/', '/128', $value['png'][0]['link'])
-                            )
-                        )
-                    )
-                ));
-            }
-
-            // Done
+            $vectors = $this->_getNormalizedVectorData($term, $decodedResponse);
             return $vectors;
         }
 
@@ -128,13 +290,14 @@
          * @access  public
          * @return  array
          */
-        public function getPlatforms()
+        public function getPlatforms(): array
         {
-            $base = 'https://api.icons8.com';
-            $path = '/api/iconsets/v3/platforms';
-            $url = ($base) . ($path);
-            $response = file_get_contents($url);
-            $decoded = json_decode($response, true);
-            return $decoded;
+            $url = $this->_getPlatformsLookupUrl();
+            $response = $this->_requestUrl($url);
+            $decodedResponse = json_decode($response, true);
+            if ($decodedResponse === null) {
+                return array();
+            }
+            return $decodedResponse;
         }
     }
