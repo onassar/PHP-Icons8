@@ -118,6 +118,20 @@
         }
 
         /**
+         * _getPlatformsLookupQueryData
+         * 
+         * @access  protected
+         * @return  array
+         */
+        protected function _getPlatformsLookupQueryData(): array
+        {
+            $data = array(
+                'nocache' => $this->_getRandomString()
+            );
+            return $data;
+        }
+
+        /**
          * _getPlatformsLookupUrl
          * 
          * @access  protected
@@ -127,8 +141,29 @@
         {
             $base = $this->_getPlatformsLookupBase();
             $path = $this->_getPlatformsLookupPath();
-            $url = ($base) . ($path);
+            $data = $this->_getPlatformsLookupQueryData();
+            $query = http_build_query($data);
+            $url = ($base) . ($path) . '?' . ($query);
             return $url;
+        }
+
+        /**
+         * _getRandomString
+         * 
+         * @see     https://stackoverflow.com/questions/4356289/php-random-string-generator
+         * @access  protected
+         * @param   int $length (default: 32)
+         * @return  string
+         */
+        protected function _getRandomString(int $length = 32): string
+        {
+            $characters = '0123456789abcdefghijklmnopqrstuvwxyz';
+            $charactersLength = strlen($characters);
+            $randomString = '';
+            for ($i = 0; $i < $length; $i++) {
+                $randomString .= $characters[rand(0, $charactersLength - 1)];
+            }
+            return $randomString;
         }
 
         /**
@@ -197,7 +232,8 @@
                 'language' => 'en',
                 'exact_match' => 'true',
                 'exact_amount' => 'true',
-                'auth-id' => $this->_key
+                'auth-id' => $this->_key,
+                'nocache' => $this->_getRandomString()
             );
             return $data;
         }
