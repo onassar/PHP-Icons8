@@ -53,6 +53,29 @@
         }
 
         /**
+         * _getNormalizedPlatformData
+         * 
+         * @access  protected
+         * @param   array $decodedResponse
+         * @return  array
+         */
+        protected function _getNormalizedPlatformData(array $decodedResponse): array
+        {
+            $platforms = array();
+            if (isset($decodedResponse['success']) === false) {
+                return $platforms;
+            }
+            if ((int) $decodedResponse['success'] === 0) {
+                return $platforms;
+            }
+            $records = $decodedResponse['result'];
+            foreach ($records as $record) {
+                array_push($platforms, $record);
+            }
+            return $platforms;
+        }
+
+        /**
          * _getNormalizedVectorData
          * 
          * @access  protected
@@ -334,6 +357,7 @@
             if ($decodedResponse === null) {
                 return array();
             }
-            return $decodedResponse;
+            $platforms = $this->_getNormalizedPlatformData($decodedResponse);
+            return $platforms;
         }
     }
