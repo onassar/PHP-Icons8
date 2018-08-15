@@ -68,9 +68,9 @@
             if ((int) $decodedResponse['success'] === 0) {
                 return $platforms;
             }
-            $records = $decodedResponse['result'];
-            foreach ($records as $record) {
-                array_push($platforms, $record);
+            $results = $decodedResponse['result'];
+            foreach ($results as $result) {
+                array_push($platforms, $result);
             }
             return $platforms;
         }
@@ -124,7 +124,7 @@
          */
         protected function _getPlatformsLookupBase(): string
         {
-            $base = 'https://api.icons8.com';
+            $base = $this->_base;
             return $base;
         }
 
@@ -314,12 +314,15 @@
          * 
          * @access  protected
          * @param   string $url
-         * @return  string
+         * @return  null|string
          */
-        protected function _requestUrl(string $url): string
+        protected function _requestUrl(string $url): ?string
         {
             $streamContext = $this->_getRequestStreamContext();
             $response = file_get_contents($url, false, $streamContext);
+            if ($response === false) {
+                return null;
+            }
             return $response;
         }
 
