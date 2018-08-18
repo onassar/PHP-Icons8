@@ -25,17 +25,31 @@
         protected $_key = null;
 
         /**
-         * _timeout
+         * _paths
+         * 
+         * @var     array
+         * @access  protected
+         */
+        protected $_paths = array(
+            'platforms' => '/api/iconsets/v3/platforms',
+            'search' => array(
+                'alternative' => '/api/iconsets/v3u/search',
+                'default' => '/api/iconsets/v3/search'
+            )
+        );
+
+        /**
+         * _requestTimeout
          * 
          * @var     int (default: 10)
          * @access  protected
          */
-        protected $_timeout = 10;
+        protected $_requestTimeout = 10;
 
         /**
          * _useAlternativeApiEndpoint
          * 
-         * @var     boolean (default: false)
+         * @var     bool (default: false)
          * @access  protected
          */
         protected $_useAlternativeApiEndpoint = true;
@@ -53,22 +67,60 @@
         }
 
         /**
+         * _addUrlParams
+         * 
+         * @access  protected
+         * @param   string $url
+         * @param   array $params
+         * @return  string
+         */
+        protected function _addUrlParams(string $url, array $params): string
+        {
+            $query = http_build_query($params);
+            $piece = parse_url($url, PHP_URL_QUERY);
+            if ($piece === null) {
+                $url = ($url) . '?' . ($query);
+                return $url;
+            }
+            $url = ($url) . '&' . ($query);
+            return $url;
+        }
+
+        /**
+         * _getCleanedThumbUrl
+         * 
+         * @access  protected
+         * @param   string $url
+         * @return  string
+         */
+        protected function _getCleanedThumbUrl(string $url): string
+        {
+            $url = preg_replace('/\/[0-9]+$/', '/128', $url);
+            $url = str_replace('advertising', 'icon441', $url);
+            $url = str_replace('&', 'and', $url);
+            return $url;
+        }
+
+        /**
          * _getNormalizedPlatformData
          * 
          * @access  protected
          * @param   array $decodedResponse
-         * @return  array
+         * @return  null|array
          */
-        protected function _getNormalizedPlatformData(array $decodedResponse): array
+        protected function _getNormalizedPlatformData(array $decodedResponse): ?array
         {
-            $platforms = array();
             if (isset($decodedResponse['success']) === false) {
-                return $platforms;
+                return null;
             }
             if ((int) $decodedResponse['success'] === 0) {
-                return $platforms;
+                return null;
             }
-            $results = $decodedResponse['result'];
+            if (isset($decodedResponse['result']) === false) {
+                return null;
+            }
+            $platforms = array();
+            $results = (array) $decodedResponse['result'];
             foreach ($results as $result) {
                 array_push($platforms, $result);
             }
@@ -81,21 +133,21 @@
          * @access  protected
          * @param   string $term
          * @param   array $decodedResponse
-         * @return  array
+         * @return  null|array
          */
-        protected function _getNormalizedVectorData(string $term, array $decodedResponse): array
+        protected function _getNormalizedVectorData(string $term, array $decodedResponse): ?array
         {
-            $vectors = array();
             if (isset($decodedResponse['result']['search']) === false) {
-                return $vectors;
+                return null;
             }
-            $records = $decodedResponse['result']['search'];
+            $vectors = array();
+            $records = (array) $decodedResponse['result']['search'];
             foreach ($records as $record) {
                 if (isset($record['vector']) === false) {
                     continue;
                 }
                 $urls = $this->_getVectorRecordUrls($record);
-                if (empty($urls) === true) {
+                if ($urls === null) {
                     continue;
                 }
                 if (isset($record['id']) === false) {
@@ -136,7 +188,7 @@
          */
         protected function _getPlatformsLookupPath(): string
         {
-            $path = '/api/iconsets/v3/platforms';
+            $path = $this->_paths['platforms'];
             return $path;
         }
 
@@ -165,8 +217,8 @@
             $base = $this->_getPlatformsLookupBase();
             $path = $this->_getPlatformsLookupPath();
             $data = $this->_getPlatformsLookupQueryData();
-            $query = http_build_query($data);
-            $url = ($base) . ($path) . '?' . ($query);
+            $url = ($base) . ($path);
+            $url = $this->_addUrlParams($url, $data);
             return $url;
         }
 
@@ -197,11 +249,11 @@
          */
         protected function _getRequestStreamContext()
         {
-            $timeout = $this->_timeout;
+            $requestTimeout = $this->_requestTimeout;
             $options = array(
                 'http' => array(
                     'method'  => 'GET',
-                    'timeout' => $timeout
+                    'timeout' => $requestTimeout
                 )
             );
             $streamContext = stream_context_create($options);
@@ -231,9 +283,9 @@
          */
         protected function _getTermSearchPath(): string
         {
-            $path = '/api/iconsets/v3/search';
+            $path = $this->_paths['search']['default'];
             if ($this->_useAlternativeApiEndpoint === true) {
-                $path = '/api/iconsets/v3u/search';
+                $path = $this->_paths['search']['alternative'];
             }
             return $path;
         }
@@ -274,8 +326,8 @@
             $base = $this->_getTermSearchBase();
             $path = $this->_getTermSearchPath();
             $data = $this->_getTermSearchQueryData($term, $options);
-            $query = http_build_query($data);
-            $url = ($base) . ($path) . '?' . ($query);
+            $url = ($base) . ($path);
+            $url = $this->_addUrlParams($url, $data);
             return $url;
         }
 
@@ -284,22 +336,24 @@
          * 
          * @access  protected
          * @param   array $record
-         * @return  array
+         * @return  null|array
          */
-        protected function _getVectorRecordUrls(array $record): array
+        protected function _getVectorRecordUrls(array $record): ?array
         {
             if (isset($record['vector']['svg-editable']) === false) {
-                return array();
+                return null;
             }
             if (isset($record['png'][0]['link']) === false) {
-                return array();
+                return null;
             }
             $key = $this->_key;
-            $svg = ($record['vector']['svg-editable']) . '?auth-id=' . ($key);
+            $url = $record['vector']['svg-editable'];
+            $params = array(
+                'auth-id' => $key
+            );
+            $svg = $this->_addUrlParams($url, $params);
             $png = $record['png'][0]['link'];
-            $png = preg_replace('/\/[0-9]+$/', '/128', $png);
-            $png = str_replace('advertising', 'icon441', $png);
-            $png = str_replace('&', 'and', $png);
+            $png = $this->_getCleanedThumbUrl($png);
             $urls = array(
                 'svg' => $svg,
                 'png' => array(
@@ -332,17 +386,23 @@
          * @access  public
          * @param   string $term
          * @param   array $options
-         * @return  array
+         * @return  null|array
          */
-        public function getIconsByTerm(string $term, array $options): array
+        public function getIconsByTerm(string $term, array $options): ?array
         {
             $url = $this->_getTermSearchUrl($term, $options);
             $response = $this->_requestUrl($url);
+            if ($response === null) {
+                return null;
+            }
             $decodedResponse = json_decode($response, true);
             if ($decodedResponse === null) {
-                return array();
+                return null;
             }
             $vectors = $this->_getNormalizedVectorData($term, $decodedResponse);
+            if ($vectors === null) {
+                return null;
+            }
             return $vectors;
         }
 
@@ -350,17 +410,23 @@
          * getPlatforms
          * 
          * @access  public
-         * @return  array
+         * @return  null|array
          */
-        public function getPlatforms(): array
+        public function getPlatforms(): ?array
         {
             $url = $this->_getPlatformsLookupUrl();
             $response = $this->_requestUrl($url);
+            if ($response === null) {
+                return null;
+            }
             $decodedResponse = json_decode($response, true);
             if ($decodedResponse === null) {
-                return array();
+                return null;
             }
             $platforms = $this->_getNormalizedPlatformData($decodedResponse);
+            if ($platforms === null) {
+                return null;
+            }
             return $platforms;
         }
     }
