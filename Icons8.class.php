@@ -25,6 +25,15 @@
         protected $_key = null;
 
         /**
+         * _maxPerPage
+         * 
+         * @note    0 implies no limit
+         * @var     int (default: 0)
+         * @access  protected
+         */
+        protected $_maxPerPage = 0;
+
+        /**
          * _paths
          * 
          * @var     array
