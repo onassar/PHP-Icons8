@@ -92,14 +92,14 @@
         }
 
         /**
-         * _addUrlParams
+         * _addURLParams
          * 
          * @access  protected
          * @param   string $url
          * @param   array $params
          * @return  string
          */
-        protected function _addUrlParams(string $url, array $params): string
+        protected function _addURLParams(string $url, array $params): string
         {
             $query = http_build_query($params);
             $piece = parse_url($url, PHP_URL_QUERY);
@@ -155,13 +155,13 @@
         }
 
         /**
-         * _getCleanedThumbUrl
+         * _getCleanedThumbURL
          * 
          * @access  protected
          * @param   string $url
          * @return  string
          */
-        protected function _getCleanedThumbUrl(string $url): string
+        protected function _getCleanedThumbURL(string $url): string
         {
             $url = preg_replace('/\/[0-9]+$/', '/128', $url);
             $url = str_replace('advertising', 'icon441', $url);
@@ -214,7 +214,7 @@
                 if (isset($record['vector']) === false) {
                     continue;
                 }
-                $urls = $this->_getVectorRecordUrls($record);
+                $urls = $this->_getVectorRecordURLs($record);
                 if ($urls === null) {
                     continue;
                 }
@@ -275,18 +275,18 @@
         }
 
         /**
-         * _getPlatformsLookupUrl
+         * _getPlatformsLookupURL
          * 
          * @access  protected
          * @return  string
          */
-        protected function _getPlatformsLookupUrl(): string
+        protected function _getPlatformsLookupURL(): string
         {
             $base = $this->_getPlatformsLookupBase();
             $path = $this->_getPlatformsLookupPath();
             $data = $this->_getPlatformsLookupQueryData();
             $url = ($base) . ($path);
-            $url = $this->_addUrlParams($url, $data);
+            $url = $this->_addURLParams($url, $data);
             return $url;
         }
 
@@ -382,31 +382,31 @@
         }
 
         /**
-         * _getTermSearchUrl
+         * _getTermSearchURL
          * 
          * @access  protected
          * @param   string $term
          * @param   array $options
          * @return  string
          */
-        protected function _getTermSearchUrl(string $term, array $options): string
+        protected function _getTermSearchURL(string $term, array $options): string
         {
             $base = $this->_getTermSearchBase();
             $path = $this->_getTermSearchPath();
             $data = $this->_getTermSearchQueryData($term, $options);
             $url = ($base) . ($path);
-            $url = $this->_addUrlParams($url, $data);
+            $url = $this->_addURLParams($url, $data);
             return $url;
         }
 
         /**
-         * _getVectorRecordUrls
+         * _getVectorRecordURLs
          * 
          * @access  protected
          * @param   array $record
          * @return  null|array
          */
-        protected function _getVectorRecordUrls(array $record): ?array
+        protected function _getVectorRecordURLs(array $record): ?array
         {
             if (isset($record['vector']['svg-editable']) === false) {
                 return null;
@@ -419,9 +419,9 @@
             $params = array(
                 'auth-id' => $key
             );
-            $svg = $this->_addUrlParams($url, $params);
+            $svg = $this->_addURLParams($url, $params);
             $png = $record['png'][0]['link'];
-            $png = $this->_getCleanedThumbUrl($png);
+            $png = $this->_getCleanedThumbURL($png);
             $urls = array(
                 'svg' => $svg,
                 'png' => array(
@@ -451,13 +451,13 @@
         }
 
         /**
-         * _requestUrl
+         * _requestURL
          * 
          * @access  protected
          * @param   string $url
          * @return  null|string
          */
-        protected function _requestUrl(string $url): ?string
+        protected function _requestURL(string $url): ?string
         {
             $streamContext = $this->_getRequestStreamContext();
             $closure = function() use ($url, $streamContext) {
@@ -496,8 +496,8 @@
          */
         public function getIconsByTerm(string $term, array $options): ?array
         {
-            $url = $this->_getTermSearchUrl($term, $options);
-            $response = $this->_requestUrl($url);
+            $url = $this->_getTermSearchURL($term, $options);
+            $response = $this->_requestURL($url);
             if ($response === null) {
                 return null;
             }
@@ -520,8 +520,8 @@
          */
         public function getPlatforms(): ?array
         {
-            $url = $this->_getPlatformsLookupUrl();
-            $response = $this->_requestUrl($url);
+            $url = $this->_getPlatformsLookupURL();
+            $response = $this->_requestURL($url);
             if ($response === null) {
                 return null;
             }
