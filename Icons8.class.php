@@ -3,7 +3,10 @@
     /**
      * Icons8
      * 
+     * PHP wrapper for Icons8
+     * 
      * @link    https://github.com/onassar/PHP-Icons8
+     * @link    https://icons8.github.io/icons8-docs/
      * @author  Oliver Nassar <onassar@gmail.com>
      */
     class Icons8
@@ -27,10 +30,18 @@
         /**
          * _key
          * 
-         * @var     null|string
+         * @var     null|string (default: null)
          * @access  protected
          */
         protected $_key = null;
+
+        /**
+         * _lastRemoteRequestHeaders
+         * 
+         * @var     array (default: array())
+         * @access  protected
+         */
+        protected $_lastRemoteRequestHeaders = array();
 
         /**
          * _logClosure
@@ -64,6 +75,14 @@
         );
 
         /**
+         * _requestApproach
+         * 
+         * @var     string (default: 'streams')
+         * @access  protected
+         */
+        protected $_requestApproach = 'streams';
+
+        /**
          * _requestTimeout
          * 
          * @var     int (default: 10)
@@ -72,12 +91,12 @@
         protected $_requestTimeout = 10;
 
         /**
-         * _useAlternativeApiEndpoint
+         * _useAlternativeAPIEndpoint
          * 
          * @var     bool (default: false)
          * @access  protected
          */
-        protected $_useAlternativeApiEndpoint = true;
+        protected $_useAlternativeAPIEndpoint = true;
 
         /**
          * __construct
@@ -117,8 +136,8 @@
          * Method which accepts a closure, and repeats calling it until
          * $attempts have been made.
          * 
-         * This was added to account for file_get_contents failing (for a
-         * variety of reasons).
+         * This was added to account for requests failing (for a variety of
+         * reasons).
          * 
          * @access  protected
          * @param   Closure $closure
@@ -156,6 +175,12 @@
 
         /**
          * _getCleanedThumbURL
+         * 
+         * This method exists because often, invalid URLs were returned. Invalid
+         * in this context meant URLs that contained words which caused the URL
+         * to be blocked by Ad Blockers (eg. "advertising") and/or entities that
+         * should not have been sent (eg. the ampersand, instead of the string
+         * "and").
          * 
          * @access  protected
          * @param   string $url
@@ -337,7 +362,7 @@
         protected function _getTermSearchBase(): string
         {
             $base = $this->_base;
-            if ($this->_useAlternativeApiEndpoint === true) {
+            if ($this->_useAlternativeAPIEndpoint === true) {
                 $base = 'https://search.icons8.com';
             }
             return $base;
@@ -352,7 +377,7 @@
         protected function _getTermSearchPath(): string
         {
             $path = $this->_paths['search']['default'];
-            if ($this->_useAlternativeApiEndpoint === true) {
+            if ($this->_useAlternativeAPIEndpoint === true) {
                 $path = $this->_paths['search']['alternative'];
             }
             return $path;
@@ -451,17 +476,101 @@
         }
 
         /**
+         * _parseCURLResponse
+         * 
+         * This method was required because at times the cURL requests would not
+         * return the headers, which would cause issues.
+         * 
+         * @access  protected
+         * @param   string $response
+         * @return  array
+         */
+        protected function _parseCURLResponse(string $response): array
+        {
+            $delimiter = "\r\n\r\n";
+            $pieces = explode($delimiter, $response);
+            if (count($pieces) === 1) {
+                $headers = '';
+                $body = $response;
+                $response = array($headers, $body);
+                return $response;
+            }
+            list($headers, $body) = explode("\r\n\r\n", $response, 2);
+            $response = array($headers, $body);
+            return $response;
+        }
+
+        /**
          * _requestURL
          * 
+         * @throws  Exception
          * @access  protected
          * @param   string $url
          * @return  null|string
          */
         protected function _requestURL(string $url): ?string
         {
-            $streamContext = $this->_getRequestStreamContext();
-            $closure = function() use ($url, $streamContext) {
+            if ($this->_requestApproach === 'cURL') {
+                $response = $this->_requestURLUsingCURL($url);
+                return $response;
+            }
+            if ($this->_requestApproach === 'streams') {
+                $response = $this->_requestURLUsingStreams($url);
+                return $response;
+            }
+            $msg = 'Invalid request approach';
+            throw new Exception($msg);
+        }
+
+        /**
+         * _requestURLUsingCURL
+         * 
+         * @see     https://stackoverflow.com/a/9183272/115025
+         * @access  protected
+         * @param   string $url
+         * @return  null|string
+         */
+        protected function _requestURLUsingCURL(string $url): ?string
+        {
+            $closure = function() use ($url) {
+                $requestTimeout = $this->_requestTimeout;
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $requestTimeout);
+                curl_setopt($ch, CURLOPT_TIMEOUT, $requestTimeout);
+                curl_setopt($ch, CURLOPT_HEADER, 1);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                $response = curl_exec($ch);
+                curl_close($ch);
+                return $response;
+            };
+            $response = $this->_attempt($closure);
+            if ($response === false) {
+                return null;
+            }
+            if ($response === null) {
+                return null;
+            }
+            list($headers, $body) = $this->_parseCURLResponse($response);
+            $this->_setCURLResponseHeaders($headers);
+            return $body;
+        }
+
+        /**
+         * _requestURLUsingStreams
+         * 
+         * @access  protected
+         * @param   string $url
+         * @return  null|string
+         */
+        protected function _requestURLUsingStreams(string $url): ?string
+        {
+            $closure = function() use ($url) {
+                $streamContext = $this->_getRequestStreamContext();
                 $response = file_get_contents($url, false, $streamContext);
+                if (isset($http_response_header) === true) {
+                    $headers = $http_response_header;
+                    $this->_lastRemoteRequestHeaders = $headers;
+                }
                 return $response;
             };
             $response = $this->_attempt($closure);
@@ -472,6 +581,19 @@
                 return null;
             }
             return $response;
+        }
+
+        /**
+         * _setCURLResponseHeaders
+         * 
+         * @access  protected
+         * @param   string $headers
+         * @return  void
+         */
+        protected function _setCURLResponseHeaders(string $headers): void
+        {
+            $headers = explode("\n", $headers);
+            $this->_lastRemoteRequestHeaders = $headers;
         }
 
         /**
@@ -546,5 +668,29 @@
         public function setLogClosure(Closure $closure)
         {
             $this->_logClosure = $closure;
+        }
+
+        /**
+         * setRequestApproach
+         * 
+         * @access  public
+         * @param   string $requestApproach
+         * @return  void
+         */
+        public function setRequestApproach(string $requestApproach): void
+        {
+            $this->_requestApproach = $requestApproach;
+        }
+
+        /**
+         * setRequestTimeout
+         * 
+         * @access  public
+         * @param   int $requestTimeout
+         * @return  void
+         */
+        public function setRequestTimeout(int $requestTimeout): void
+        {
+            $this->_requestTimeout = $requestTimeout;
         }
     }
