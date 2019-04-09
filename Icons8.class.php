@@ -46,7 +46,7 @@
         /**
          * _logClosure
          * 
-         * @var     null|Closure (defualt: null)
+         * @var     null|Closure (default: null)
          * @access  protected
          */
         protected $_logClosure = null;
@@ -665,7 +665,7 @@
          * @param   Closure $closure
          * @return  void
          */
-        public function setLogClosure(Closure $closure)
+        public function setLogClosure(Closure $closure): void
         {
             $this->_logClosure = $closure;
         }
