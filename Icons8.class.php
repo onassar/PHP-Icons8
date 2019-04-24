@@ -14,40 +14,40 @@
         /**
          * _attemptSleepDelay
          * 
-         * @var     int (default: 2000) in milliseconds
          * @access  protected
+         * @var     int (default: 2000) in milliseconds
          */
         protected $_attemptSleepDelay = 2000;
 
         /**
          * _base
          * 
-         * @var     string (default: 'https://api.icons8.com')
          * @access  protected
+         * @var     string (default: 'https://api.icons8.com')
          */
         protected $_base = 'https://api.icons8.com';
 
         /**
          * _key
          * 
-         * @var     null|string (default: null)
          * @access  protected
+         * @var     null|string (default: null)
          */
         protected $_key = null;
 
         /**
          * _lastRemoteRequestHeaders
          * 
-         * @var     array (default: array())
          * @access  protected
+         * @var     array (default: array())
          */
         protected $_lastRemoteRequestHeaders = array();
 
         /**
          * _logClosure
          * 
-         * @var     null|Closure (default: null)
          * @access  protected
+         * @var     null|Closure (default: null)
          */
         protected $_logClosure = null;
 
@@ -55,16 +55,16 @@
          * _maxPerPage
          * 
          * @note    0 implies no limit
-         * @var     int (default: 0)
          * @access  protected
+         * @var     int (default: 0)
          */
         protected $_maxPerPage = 0;
 
         /**
          * _paths
          * 
-         * @var     array
          * @access  protected
+         * @var     array
          */
         protected $_paths = array(
             'platforms' => '/api/iconsets/v3/platforms',
@@ -77,24 +77,24 @@
         /**
          * _requestApproach
          * 
-         * @var     string (default: 'streams')
          * @access  protected
+         * @var     string (default: 'streams')
          */
         protected $_requestApproach = 'streams';
 
         /**
          * _requestTimeout
          * 
-         * @var     int (default: 10)
          * @access  protected
+         * @var     int (default: 10)
          */
         protected $_requestTimeout = 10;
 
         /**
          * _useAlternativeAPIEndpoint
          * 
-         * @var     bool (default: false)
          * @access  protected
+         * @var     bool (default: false)
          */
         protected $_useAlternativeAPIEndpoint = true;
 
