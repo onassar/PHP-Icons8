@@ -237,6 +237,9 @@
                     continue;
                 }
                 $urls = $this->_getVectorRecordURLs($icon);
+                if ($urls === null)  {
+                    continue;
+                }
                 $vector = array(
                     'id' => $icon['id'],
                     'tags' => array(),
@@ -420,10 +423,16 @@
          * @see     https://icons8.github.io/icons8-docs/api/retrieval-engine/
          * @access  protected
          * @param   array $record
-         * @return  array
+         * @return  null|array
          */
-        protected function _getVectorRecordURLs(array $record): array
+        protected function _getVectorRecordURLs(array $record): ?array
         {
+            if (isset($record['platform']) === false) {
+                return null;
+            }
+            if (isset($record['commonName']) === false) {
+                return null;
+            }
             $platform = $record['platform'];
             $commonName = $record['commonName'];
             $token = $this->_key;
