@@ -7,6 +7,9 @@
      * 
      * @link    https://github.com/onassar/PHP-Icons8
      * @link    https://icons8.github.io/icons8-docs/
+     * @see     https://api.icons8.com/api/iconsets/v3/search?term=tree&amount=64&offset=0&language=en&exact_match=true&exact_amount=true&auth-id=al05i21yfatb4s5eac20c4wr4394b1z2&nocache=vs73s4700dwe1drvlnj17t49v9t7k0qw
+     * @see     https://api.icons8.com/api/iconsets/v4/search?term=love&amount=64&offset=0&language=en&exact_match=true&exact_amount=true&auth-id=al05i21yfatb4s5eac20c4wr4394b1z2&nocache=vs73s4700dwe1drvlnj17t49v9t7k0qw
+     * @see     https://img.icons8.com/win8/128/musical-notes?token=al05i21yfatb4s5eac20c4wr4394b1z2
      * @author  Oliver Nassar <onassar@gmail.com>
      */
     class Icons8
@@ -23,9 +26,9 @@
          * _base
          * 
          * @access  protected
-         * @var     string (default: 'https://api.icons8.com')
+         * @var     string (default: 'https://search.icons8.com')
          */
-        protected $_base = 'https://api.icons8.com';
+        protected $_base = 'https://search.icons8.com';
 
         /**
          * _key
@@ -52,15 +55,6 @@
         protected $_logClosure = null;
 
         /**
-         * _maxPerPage
-         * 
-         * @note    0 implies no limit
-         * @access  protected
-         * @var     int (default: 0)
-         */
-        protected $_maxPerPage = 0;
-
-        /**
          * _paths
          * 
          * @access  protected
@@ -70,7 +64,7 @@
             'platforms' => '/api/iconsets/v3/platforms',
             'search' => array(
                 'alternative' => '/api/iconsets/v3u/search',
-                'default' => '/api/iconsets/v3/search'
+                'default' => '/api/iconsets/v4/search'
             )
         );
 
@@ -96,7 +90,7 @@
          * @access  protected
          * @var     bool (default: false)
          */
-        protected $_useAlternativeAPIEndpoint = true;
+        protected $_useAlternativeAPIEndpoint = false;
 
         /**
          * __construct
@@ -188,9 +182,9 @@
          */
         protected function _getCleanedThumbURL(string $url): string
         {
-            $url = preg_replace('/\/[0-9]+$/', '/128', $url);
-            $url = str_replace('advertising', 'icon441', $url);
-            $url = str_replace('&', 'and', $url);
+            // $url = preg_replace('/\/[0-9]+$/', '/128', $url);
+            // $url = str_replace('advertising', 'icon441', $url);
+            // $url = str_replace('&', 'and', $url);
             return $url;
         }
 
@@ -230,30 +224,24 @@
          */
         protected function _getNormalizedVectorData(string $term, array $decodedResponse): ?array
         {
-            if (isset($decodedResponse['result']['search']) === false) {
+            if (isset($decodedResponse['icons']) === false) {
                 return null;
             }
             $vectors = array();
-            $records = (array) $decodedResponse['result']['search'];
-            foreach ($records as $record) {
-                if (isset($record['vector']) === false) {
+            $icons = (array) $decodedResponse['icons'];
+            foreach ($icons as $icon) {
+                if (isset($icon['id']) === false) {
                     continue;
                 }
-                $urls = $this->_getVectorRecordURLs($record);
-                if ($urls === null) {
+                if (isset($icon['platform']) === false) {
                     continue;
                 }
-                if (isset($record['id']) === false) {
-                    continue;
-                }
-                if (isset($record['platform_code']) === false) {
-                    continue;
-                }
+                $urls = $this->_getVectorRecordURLs($icon);
                 $vector = array(
-                    'id' => $record['id'],
+                    'id' => $icon['id'],
                     'tags' => array(),
                     'original_term' => $term,
-                    'platform_code' => $record['platform_code'],
+                    'platform_code' => $icon['platform'],
                     'urls' => $urls
                 );
                 array_push($vectors, $vector);
@@ -293,8 +281,9 @@
          */
         protected function _getPlatformsLookupQueryData(): array
         {
+            $random = $this->_getRandomString();
             $data = array(
-                'nocache' => $this->_getRandomString()
+                'nocache' => $random
             );
             return $data;
         }
@@ -393,6 +382,7 @@
          */
         protected function _getTermSearchQueryData(string $term, array $options): array
         {
+            $random = $this->_getRandomString();
             $data = array(
                 'term' => $term,
                 'amount' => (int) $options['limit'],
@@ -401,7 +391,7 @@
                 'exact_match' => 'true',
                 'exact_amount' => 'true',
                 'auth-id' => $this->_key,
-                'nocache' => $this->_getRandomString()
+                'nocache' => $random
             );
             return $data;
         }
@@ -427,31 +417,28 @@
         /**
          * _getVectorRecordURLs
          * 
+         * @see     https://icons8.github.io/icons8-docs/api/retrieval-engine/
          * @access  protected
          * @param   array $record
-         * @return  null|array
+         * @return  array
          */
-        protected function _getVectorRecordURLs(array $record): ?array
+        protected function _getVectorRecordURLs(array $record): array
         {
-            if (isset($record['vector']['svg-editable']) === false) {
-                return null;
-            }
-            if (isset($record['png'][0]['link']) === false) {
-                return null;
-            }
-            $key = $this->_key;
-            $url = $record['vector']['svg-editable'];
-            $params = array(
-                'auth-id' => $key
-            );
-            $svg = $this->_addURLParams($url, $params);
-            $png = $record['png'][0]['link'];
+            $platform = $record['platform'];
+            $commonName = $record['commonName'];
+            $token = $this->_key;
+            $png = 'https://img.icons8.com/' . ($platform) . '/128/' . ($commonName) . '.png?token=' . ($token);
+            $svg = 'https://img.icons8.com/' . ($platform) . '/' . ($commonName) . '.svg?token=' . ($token);
+            $random = $this->_getRandomString();
+            $svg = $this->_addURLParams($svg, array(
+                'nocache' => $random
+            ));
             $png = $this->_getCleanedThumbURL($png);
             $urls = array(
-                'svg' => $svg,
                 'png' => array(
                     '128' => $png
-                )
+                ),
+                'svg' => $svg
             );
             return $urls;
         }
