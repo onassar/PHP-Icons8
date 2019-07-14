@@ -418,6 +418,26 @@
         }
 
         /**
+         * _getPlatformName
+         * 
+         * @note    It's possible for the platform value to be an array
+         *          :shrug emoji:
+         * @see     https://i.imgur.com/6nxftZH.png
+         * @access  protected
+         * @param   array $record
+         * @return  string
+         */
+        protected function _getPlatformName(array $record): string
+        {
+            $platform = $record['platform'];
+            if (is_array($platform) === false) {
+                return $platform;
+            }
+            $platform = array_shift($platform);
+            return $platform;
+        }
+
+        /**
          * _getVectorRecordURLs
          * 
          * @see     https://icons8.github.io/icons8-docs/api/retrieval-engine/
@@ -433,7 +453,7 @@
             if (isset($record['commonName']) === false) {
                 return null;
             }
-            $platform = $record['platform'];
+            $platform = $this->_getPlatformName($record);
             $commonName = $record['commonName'];
             $token = $this->_key;
             $png = 'https://img.icons8.com/' . ($platform) . '/128/' . ($commonName) . '.png?token=' . ($token);
