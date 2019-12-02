@@ -284,10 +284,8 @@
          */
         protected function _getPlatformsLookupQueryData(): array
         {
-            $random = $this->_getRandomString();
-            $data = array(
-                'nocache' => $random
-            );
+            $nocache = $this->_getRandomString();
+            $data = compact('nocache');
             return $data;
         }
 
