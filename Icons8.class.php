@@ -189,6 +189,19 @@
         }
 
         /**
+         * _getHost
+         * 
+         * @access  protected
+         * @return  string
+         */
+        protected function _getHost(): string
+        {
+            // $host = 'img.icons8.com';
+            $host = 'api-img.icons8.com';
+            return $host;
+        }
+
+        /**
          * _getNormalizedPlatformData
          * 
          * @access  protected
@@ -454,8 +467,9 @@
             $platform = $this->_getPlatformName($record);
             $commonName = $record['commonName'];
             $token = $this->_key;
-            $png = 'https://img.icons8.com/' . ($platform) . '/128/' . ($commonName) . '.png?token=' . ($token);
-            $svg = 'https://img.icons8.com/' . ($platform) . '/' . ($commonName) . '.svg?token=' . ($token);
+            $host = $this->_getHost();
+            $png = 'https://' . ($host ) . '/' . ($platform) . '/128/' . ($commonName) . '.png?token=' . ($token);
+            $svg = 'https://' . ($host ) . '/' . ($platform) . '/' . ($commonName) . '.svg?token=' . ($token);
             $random = $this->_getRandomString();
             $svg = $this->_addURLParams($svg, array(
                 'nocache' => $random
