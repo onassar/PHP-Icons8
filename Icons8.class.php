@@ -185,8 +185,6 @@
             $path = '/' . ($platform) . '/128/' . ($commonName) . '.png';
             $url = 'https://' . ($host) . ($path);
             $authRequestData = $this->_getAuthRequestData('cdn');
-            // $cachingRequestData = $this->_getCachingRequestData();
-            // $requestData = array_merge($authRequestData, $cachingRequestData);
             $url = $this->_addURLParams($url, $authRequestData);
             return $url;
         }
