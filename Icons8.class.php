@@ -53,12 +53,13 @@
         /**
          * __construct
          * 
+         * @note    No documented limit
          * @access  public
          * @return  void
          */
         public function __construct()
         {
-            $this->_maxResultsPerRequest = 16;
+            $this->_maxResultsPerRequest = 256;
             $this->_responseResultsIndex = 'icons';
         }
 
