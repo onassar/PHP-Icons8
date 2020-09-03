@@ -11,8 +11,6 @@
      * 
      * @link    https://github.com/onassar/PHP-Icons8
      * @link    https://icons8.github.io/icons8-docs/
-     * @see     https://api.icons8.com/api/iconsets/v3/search?term=tree&amount=64&offset=0&language=en&exact_match=true&exact_amount=true&auth-id=al05i21yfatb4s5eac20c4wr4394b1z2&nocache=vs73s4700dwe1drvlnj17t49v9t7k0qw
-     * @see     https://api.icons8.com/api/iconsets/v4/search?term=love&amount=64&offset=0&language=en&exact_match=true&exact_amount=true&auth-id=al05i21yfatb4s5eac20c4wr4394b1z2&nocache=vs73s4700dwe1drvlnj17t49v9t7k0qw
      * @see     https://img.icons8.com/win8/128/musical-notes?token=al05i21yfatb4s5eac20c4wr4394b1z2
      * @author  Oliver Nassar <onassar@gmail.com>
      * @extends RemoteRequests\Base
@@ -218,7 +216,7 @@
                 return null;
             }
             $png = $this->_getSearchResultPNGURL($result);
-            $png = $this->_sanitizedPNGURL($png);
+            $png = $this->_sanitizePNGURL($png);
             $svg = $this->_getSearchResultSVGURL($result);
             $urls = array(
                 'png' => array(
@@ -262,7 +260,7 @@
         }
 
         /**
-         * _sanitizedPNGURL
+         * _sanitizePNGURL
          * 
          * This method exists because often, invalid URLs were returned. Invalid
          * in this context meant URLs that contained words which caused the URL
@@ -274,7 +272,7 @@
          * @param   string $url
          * @return  string
          */
-        protected function _sanitizedPNGURL(string $url): string
+        protected function _sanitizePNGURL(string $url): string
         {
             // $url = preg_replace('/\/[0-9]+$/', '/128', $url);
             // $url = str_replace('advertising', 'icon441', $url);
