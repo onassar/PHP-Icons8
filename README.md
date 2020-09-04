@@ -5,6 +5,9 @@ PHP SDK for running queries against the millions of icons provided by
 ### Supports
 - Searches
 
+### Requirements
+- [PHP-RemoteRequests](https://github.com/onassar/PHP-RemoteRequests)
+
 ### Sample Search
 ``` php
 $client = new onassar\Icons8\Icons8();
@@ -15,7 +18,3 @@ $results = $client->search('love') ?? array();
 print_r($results);
 exit(0);
 ```
-
-### Note
-Requires
-[PHP-RemoteRequests](https://github.com/onassar/PHP-RemoteRequests).
