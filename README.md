@@ -10,7 +10,7 @@ PHP SDK for running queries against the millions of icons provided by
 
 ### Sample Search
 ``` php
-$client = new onassar\Icons8\Icons8();
+$client = new onassar\Icons8\Base();
 $client->setAPIKey('***');
 $client->setLimit(10);
 $client->setOffset(0);

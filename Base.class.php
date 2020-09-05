@@ -5,7 +5,7 @@
     use onassar\RemoteRequests;
 
     /**
-     * Icons8
+     * Base
      * 
      * PHP wrapper for Icons8.
      * 
@@ -15,7 +15,7 @@
      * @author  Oliver Nassar <onassar@gmail.com>
      * @extends RemoteRequests\Base
      */
-    class Icons8 extends RemoteRequests\Base
+    class Base extends RemoteRequests\Base
     {
         /**
          * Traits
