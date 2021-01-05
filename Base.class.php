@@ -57,8 +57,8 @@
          */
         public function __construct()
         {
-            $this->_maxResultsPerRequest = 256;
-            $this->_responseResultsIndex = 'icons';
+            $this->_maxResultsSupportedPerRequest = 256;
+            $this->_responseResultsIndexKey = 'icons';
         }
 
         /**
