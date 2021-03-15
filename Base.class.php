@@ -89,7 +89,8 @@
             $key = $this->_apiKey;
             if ($requestType === 'search') {
                 $authRequestData = array(
-                    'token' => $key
+                    'auth-id' => $key
+                    // 'token' => $key
                 );
                 return $authRequestData;
             }
