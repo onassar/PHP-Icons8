@@ -303,6 +303,7 @@
         protected function _setPlatformsRequestURL(): void
         {
             $url = $this->_getPlatformsRequestURL();
+            $url = ($url) . '?limit=500';
             $this->setURL($url);
         }
 
